@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head><script>window.APP_KEY='meal'</script><script src="store.js"></script><script src="meal-export.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>মিলের হিসাব</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1520; --bg2:#12202f; --surface:#172a3d; --surface2:#1d3349;
+  --line:rgba(255,255,255,.08); --text:#eaf0f6; --muted:#8fa3b8;
+  --gold:#e9bd6b; --gold2:#c99a45; --mint:#4fd1a5; --rose:#f08a8a; --sky:#7fb3f5;
+}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:'Hind Siliguri','Noto Sans Bengali','Kalpurush',system-ui,sans-serif;line-height:1.5}
+body{min-height:100vh;background:
+  radial-gradient(900px 500px at 90% -10%,rgba(127,179,245,.13),transparent 60%),
+  radial-gradient(700px 500px at -10% 10%,rgba(233,189,107,.08),transparent 60%),var(--bg)}
+.wrap{max-width:640px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px 70px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+h1{font-size:22px;font-weight:700}
+.hr{display:flex;align-items:center;gap:10px}
+.sync{font-size:13px;color:var(--muted)} .sync.ok{color:var(--mint)}
+.pill{padding:7px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;font-weight:500}
+
+.monthbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.monthbar b{font-size:19px;font-weight:600}
+.navbtn{width:40px;height:40px;border-radius:13px;background:var(--surface);border:1px solid var(--line);font-size:20px;line-height:1}
+.navbtn:active{transform:scale(.92)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--bg2);padding:5px;border-radius:16px;margin-bottom:6px;border:1px solid var(--line)}
+.tabs button{padding:10px 6px;border-radius:12px;font-weight:600;color:var(--muted);transition:.2s}
+.tabs button.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1405}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:14px}
+.card h2{font-size:16px;font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2 small{font-weight:400;color:var(--muted);font-size:13px}
+.hero{background:linear-gradient(160deg,var(--surface2),var(--surface));border-radius:28px;padding:22px 22px 18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-50px;top:-50px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(127,179,245,.25),transparent 70%)}
+.hero>*{position:relative;z-index:1}
+.lbl{color:var(--muted);font-size:14px}
+.big{font-size:44px;font-weight:700;line-height:1.15;color:var(--gold);font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.stat{background:rgba(0,0,0,.18);border-radius:14px;padding:10px 12px;min-width:0}
+.stat span{display:block;font-size:12px;color:var(--muted)}
+.stat b{font-size:17px;font-weight:600;white-space:nowrap}
+.stat.gold b{color:var(--gold)} .stat.mint b{color:var(--mint)}
+.card.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px}
+
+.mem{padding:14px 0;border-top:1px solid var(--line)} .mem:first-of-type{border-top:0;padding-top:2px}
+.memhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
+.memhead b{font-size:17px;font-weight:600}
+.chip2{padding:4px 12px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap}
+.chip2.pos{background:rgba(79,209,165,.15);color:var(--mint)}
+.chip2.neg{background:rgba(240,138,138,.15);color:var(--rose)}
+.chip2.zero{background:rgba(255,255,255,.07);color:var(--muted)}
+.line{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;padding:1px 0;gap:8px}
+.line b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.line.tot{margin-top:3px;padding-top:5px;border-top:1px dashed var(--line)}
+.settle{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);gap:8px}
+.settle:first-of-type{border-top:0}
+.settle .arrow{color:var(--gold);margin:0 6px}
+.settle b.amt{color:var(--gold);font-variant-numeric:tabular-nums}
+.empty-msg{color:var(--muted);font-size:14px;padding:4px 0}
+
+.mtable,.drow{display:grid;align-items:center}
+.mtable{grid-template-columns:1.3fr .8fr 1fr 1fr;gap:4px 8px;font-size:14px}
+.mtable .h{font-size:12px;color:var(--muted)}
+.mtable .r{text-align:right;font-variant-numeric:tabular-nums}
+.mtable .t{border-top:1px solid var(--line);padding-top:6px;font-weight:700;color:var(--gold)}
+.mtable span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.dgrid{margin:0 -6px}
+.drow{width:100%;text-align:left;padding:9px 6px;border-top:1px solid var(--line);border-radius:0}
+.drow.head{border-top:0;font-size:12px;color:var(--muted);padding-bottom:4px}
+.drow.head .dc{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.drow:active{background:rgba(255,255,255,.05)}
+.drow.today{background:rgba(233,189,107,.09)}
+.drow.total{border-top:1px solid rgba(233,189,107,.4);font-weight:700;color:var(--gold)}
+.dl b{font-size:17px;font-weight:600;margin-right:5px;font-variant-numeric:tabular-nums} .dl small{color:var(--muted);font-size:12px}
+.dc{text-align:center;font-weight:600;font-size:16px;font-variant-numeric:tabular-nums}
+.dc.z{color:rgba(143,163,184,.4);font-weight:400}
+
+.entry{display:flex;align-items:center;gap:12px;padding:10px 0;width:100%;text-align:left;border-top:1px solid var(--line)}
+.entry:first-child{border-top:0}
+.av{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:16px;flex:none;color:#10161e}
+.entry .mid{flex:1;min-width:0}
+.entry .mid div,.entry .mid small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry .mid small{color:var(--muted);font-size:13px}
+.entry .amt{font-weight:700;font-size:17px;color:var(--gold);font-variant-numeric:tabular-nums}
+
+.btn{padding:13px 16px;border-radius:14px;font-weight:600;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1405;width:100%}
+.btn:active{transform:scale(.97)}
+a.btn{display:block;text-align:center;text-decoration:none}
+.btn.ghost{background:rgba(255,255,255,.07);color:var(--text)}
+.btn.danger{background:rgba(240,138,138,.13);color:var(--rose)}
+.row{display:flex;gap:8px;margin-top:14px} .row .btn{flex:1}
+.row .btn.danger{flex:0 0 auto;width:auto}
+
+dialog{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:18px 18px max(20px,env(safe-area-inset-bottom));width:100%;max-width:640px;margin:auto auto 0;border-radius:26px 26px 0 0;max-height:92vh}
+dialog::backdrop{background:rgba(5,10,16,.7);backdrop-filter:blur(4px)}
+dialog h3{font-size:18px;font-weight:600}
+.dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px}
+.dhead .navbtn{flex:none}
+.quick{display:flex;gap:8px;margin:8px 0 4px}
+.quick button{flex:1;padding:8px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font-size:14px;font-weight:500;color:var(--muted)}
+.step{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line)}
+.step:first-of-type{border-top:0}
+.step .nm{font-weight:600;font-size:17px}
+.step .ctl{display:flex;align-items:center;gap:8px}
+.step .ctl button{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.08);font-size:24px;line-height:1}
+.step .ctl button:active{transform:scale(.9)}
+.step .val{min-width:54px;text-align:center;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+input[type=number],input[type=text],input[type=date]{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;width:100%;min-width:0;color-scheme:dark}
+#eAmt{font-size:28px;font-weight:700;padding:12px 16px}
+.field{margin-top:10px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 15px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--muted);font-size:15px}
+.chip.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1405;border-color:transparent;font-weight:600}
+.mrow2{display:flex;gap:8px;margin-bottom:8px}
+.mrow2 .nm{flex:1;padding:12px 14px;background:var(--bg2);border-radius:14px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.mrow2 button.plus{background:rgba(255,255,255,.1);color:var(--text);font-size:22px}
+.mrow2 button{width:46px;border-radius:14px;background:rgba(240,138,138,.13);color:var(--rose);flex:none}
+#printArea{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  html,body{background:#fff!important;color:#111!important}
+  .wrap,dialog,.toast{display:none!important}
+  #printArea{display:block!important;font-family:'Hind Siliguri','Noto Sans Bengali','Kalpurush',system-ui,sans-serif;color:#111;line-height:1.45}
+  .rp h1{font-size:23px;margin:0 0 2px}
+  .rp .sub{color:#555;font-size:12px;margin-bottom:10px}
+  .rp h2{font-size:15px;margin:16px 0 6px;color:#1f3a5f}
+  .rp h2.brk{page-break-before:always;margin-top:0}
+  .rp .rstats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 4px}
+  .rp .rstats div{border:1px solid #bfc8d4;border-radius:6px;padding:5px 8px;font-size:12px;color:#555}
+  .rp .rstats b{display:block;font-size:15px;color:#111}
+  .rp table{border-collapse:collapse;width:100%;font-size:12px;margin-bottom:6px}
+  .rp th{background:#1f3a5f!important;color:#fff!important;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rp th,.rp td{border:1px solid #bfc8d4;padding:4px 6px;text-align:left}
+  .rp td.n,.rp th.n{text-align:right}
+  .rp tr{page-break-inside:avoid}
+  .rp tr.tot td{background:#eef2f7!important;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rp .pos{color:#0a7a55;font-weight:600} .rp .neg{color:#b42323;font-weight:600}
+  .rp .foot{margin-top:14px;color:#777;font-size:11px}
+}
+.toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,30px);background:var(--surface2);border:1px solid var(--line);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>মিলের হিসাব</h1>
+    <div class="hr"><span class="sync" id="sync">লোড হচ্ছে…</span><button class="pill" id="memBtn">সদস্য</button></div>
+  </header>
+
+  <div class="monthbar">
+    <button class="navbtn" id="prev" aria-label="আগের মাস">‹</button>
+    <b id="monthTitle"></b>
+    <button class="navbtn" id="next" aria-label="পরের মাস">›</button>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-t="sum">সারাংশ</button>
+    <button data-t="meal">মিল</button>
+    <button data-t="snack">স্ন্যাক</button>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<!-- দিনের মিল -->
+<dialog id="dayDlg">
+  <div class="dhead">
+    <button class="navbtn" id="dPrev" aria-label="আগের দিন">‹</button>
+    <h3 id="dTitle"></h3>
+    <button class="navbtn" id="dNext" aria-label="পরের দিন">›</button>
+  </div>
+  <div class="quick" id="dQuick"></div>
+  <div id="dBody"></div>
+  <div class="row"><button class="btn" id="dDone">হয়েছে</button></div>
+</dialog>
+
+<!-- খরচ -->
+<dialog id="expDlg">
+  <h3 id="eTitle"></h3>
+  <div class="field"><input type="number" id="eAmt" inputmode="decimal" min="0" placeholder="৳ টাকার পরিমাণ"></div>
+  <div class="field"><label>কে দিয়েছেন</label><div class="chips" id="eWho"></div></div>
+  <div class="field"><label>বিবরণ (ঐচ্ছিক)</label><input type="text" id="eNote" placeholder="যেমন: চাল, ডাল, মাছ" autocomplete="off"></div>
+  <div class="field"><label>তারিখ (ঐচ্ছিক)</label><input type="date" id="eDate"></div>
+  <div class="row">
+    <button class="btn danger" id="eDel">মুছুন</button>
+    <button class="btn ghost" id="eCancel">বাতিল</button>
+    <button class="btn" id="eOk">সেভ করুন</button>
+  </div>
+</dialog>
+
+<!-- সদস্য -->
+<dialog id="memDlg">
+  <h3 style="margin-bottom:12px">সদস্য</h3>
+  <div id="memList"></div>
+  <div class="mrow2"><input type="text" id="newMem" placeholder="নতুন সদস্যের নাম" autocomplete="off"><button id="addMem" class="plus" aria-label="যোগ করুন">+</button></div>
+  <div class="row"><button class="btn" id="memDone">হয়েছে</button></div>
+</dialog>
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/data';
+const BASE = API.slice(0, API.length - 9);
+const $ = id => document.getElementById(id);
+const NF = new Intl.NumberFormat('en-US', {maximumFractionDigits: 2});
+const fmt = n => NF.format(Math.round(n * 100) / 100);
+const money = n => '৳' + fmt(Math.abs(n) < 0.005 ? 0 : n);
+const MONTHS = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+const WK = ['রবি','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি'];
+const WKL = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+const COLORS = ['#7fb3f5','#e9bd6b','#4fd1a5','#f08a8a','#c49af0','#f5a26b','#6fd6e0','#b6d86b'];
+
+let data = {members: [], months: {}};
+let tab = 'sum';
+let view = new Date(); view.setDate(1);
+let saveTimer = null;
+let setup = false;
+
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Math.random().toString(36).slice(2, 9);
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const sumArr = a => a.reduce((x, y) => x + y, 0);
+
+function h(tag, cls, text, ...kids) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  kids.forEach(k => k && e.appendChild(k));
+  return e;
+}
+function setSync(t, ok) { const s = $('sync'); s.textContent = t; s.classList.toggle('ok', !!ok); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2200); }
+
+// <calc>
+const mkey = () => view.getFullYear() + '-' + String(view.getMonth() + 1).padStart(2, '0');
+const EMPTY = {counts: {meal: {}, snack: {}}, expenses: []};
+const M = () => data.months[mkey()] || EMPTY;
+function W() {
+  const k = mkey();
+  if (!data.months[k]) data.months[k] = {counts: {meal: {}, snack: {}}, expenses: []};
+  const m = data.months[k];
+  m.counts = m.counts || {}; m.counts.meal = m.counts.meal || {}; m.counts.snack = m.counts.snack || {};
+  m.expenses = m.expenses || [];
+  return m;
+}
+function getCount(kind, mid, d) { return ((((M().counts || {})[kind] || {})[mid] || {})[d]) || 0; }
+function calc(kind) {
+  const m = M();
+  const counts = (m.counts || {})[kind] || {};
+  const totals = {}, paid = {};
+  data.members.forEach(x => {
+    totals[x.id] = sumArr(Object.values(counts[x.id] || {}).map(v => +v || 0));
+  });
+  const exp = (m.expenses || []).filter(e => e.kind === kind && data.members.some(x => x.id === e.by));
+  data.members.forEach(x => { paid[x.id] = sumArr(exp.filter(e => e.by === x.id).map(e => +e.amount || 0)); });
+  const totalMeals = sumArr(Object.values(totals));
+  const totalExp = sumArr(Object.values(paid));
+  const rate = totalMeals > 0 ? totalExp / totalMeals : 0;
+  return {totals, paid, exp, totalMeals, totalExp, rate};
+}
+function settle(list) {
+  const cr = list.filter(x => x.b > 0.005).map(x => ({name: x.name, b: x.b})).sort((a, b) => b.b - a.b);
+  const dr = list.filter(x => x.b < -0.005).map(x => ({name: x.name, b: -x.b})).sort((a, b) => b.b - a.b);
+  const out = []; let i = 0, j = 0;
+  while (i < dr.length && j < cr.length) {
+    const a = Math.min(dr[i].b, cr[j].b);
+    out.push([dr[i].name, cr[j].name, a]);
+    dr[i].b -= a; cr[j].b -= a;
+    if (dr[i].b < 0.005) i++;
+    if (cr[j].b < 0.005) j++;
+  }
+  return out;
+}
+// </calc>
+
+const memberById = id => data.members.find(x => x.id === id);
+const memberIdx = id => data.members.findIndex(x => x.id === id);
+const colorOf = id => COLORS[Math.max(0, memberIdx(id)) % COLORS.length];
+const unitOf = kind => kind === 'meal' ? 'মিল' : 'স্ন্যাক';
+
+async function load() {
+  try {
+    const r = await fetch(API); data = await r.json();
+    setSync('সেভ আছে', true);
+  } catch (e) { setSync('সার্ভার পাওয়া যাচ্ছে না', false); }
+  if (!Array.isArray(data.members)) data.members = [];
+  if (!data.months) data.months = {};
+  setup = !data.members.length;
+  // বর্তমান মাসে ডাটা না থাকলে সবচেয়ে সাম্প্রতিক ডাটা-ওয়ালা মাসে যাই
+  if (!data.months[mkey()]) {
+    const ks = Object.keys(data.months).sort();
+    if (ks.length) { const [y, m] = ks[ks.length - 1].split('-').map(Number); view = new Date(y, m - 1, 1); }
+  }
+  render();
+}
+
+function save() {
+  setSync('সেভ হচ্ছে…', false);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(API, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+      if (!r.ok) throw 0;
+      setSync('সেভ হয়েছে ✓', true);
+    } catch (e) { setSync('সেভ হয়নি!', false); toast('সেভ করা যায়নি — সার্ভার চালু আছে কি?'); }
+  }, 250);
+}
+
+function stat(label, val, cls) { return h('div', 'stat' + (cls ? ' ' + cls : ''), null, h('span', null, label), h('b', null, val)); }
+
+function render() {
+  $('monthTitle').textContent = MONTHS[view.getMonth()] + ' ' + view.getFullYear();
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  const box = $('content'); box.innerHTML = '';
+  const onboarding = setup || !data.members.length;
+  $('tabs').style.display = onboarding ? 'none' : '';
+  document.querySelector('.monthbar').style.display = onboarding ? 'none' : '';
+  if (onboarding) { renderSetup(box); return; }
+  if (tab === 'sum') renderSummary(box); else renderKind(box, tab);
+}
+
+
+// ---------- প্রথমবারের ধাপ: সদস্যদের নাম ----------
+function renderSetup(box) {
+  const card = h('section', 'card');
+  card.appendChild(h('h2', null, 'শুরু করুন'));
+  card.appendChild(h('div', 'empty-msg', 'যারা মিলে আছেন সবার নাম যোগ করুন। যেকোনো নাম দিতে পারবেন — পরে "সদস্য" বোতাম থেকে নাম বদলানো, নতুন কাউকে যোগ করা বা মুছে ফেলা যাবে।'));
+  const list = h('div'); list.style.marginTop = '12px';
+  data.members.forEach(m => {
+    const del = h('button', null, '✕'); del.setAttribute('aria-label', 'মুছুন');
+    del.onclick = () => { data.members = data.members.filter(x => x.id !== m.id); save(); render(); };
+    list.appendChild(h('div', 'mrow2', null, h('span', 'nm', m.name), del));
+  });
+  card.appendChild(list);
+  const inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = 'সদস্যের নাম লিখুন'; inp.autocomplete = 'off';
+  const add = h('button', 'plus', '+'); add.setAttribute('aria-label', 'যোগ করুন');
+  const doAdd = () => {
+    const n = inp.value.trim(); if (!n) return;
+    data.members.push({id: uid(), name: n}); save(); render();
+    const i = document.querySelector('#content input'); if (i) i.focus();
+  };
+  add.onclick = doAdd; inp.onkeydown = e => { if (e.key === 'Enter') doAdd(); };
+  card.appendChild(h('div', 'mrow2', null, inp, add));
+  const go = h('button', 'btn', 'শুরু করুন →'); go.style.marginTop = '8px';
+  go.onclick = () => {
+    if (inp.value.trim()) doAdd();
+    if (!data.members.length) { toast('অন্তত একজনের নাম যোগ করুন'); return; }
+    setup = false; render();
+  };
+  card.appendChild(go);
+  box.appendChild(card);
+}
+
+
+// <report>
+function dateLabel(str) { if (!str) return ''; const d = new Date(str + 'T00:00:00'); return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+function buildReport() {
+  const cm = calc('meal'), cs = calc('snack');
+  const y = view.getFullYear(), mo = view.getMonth(), nd = new Date(y, mo + 1, 0).getDate();
+  const members = data.members.map(x => {
+    const mealCost = cm.totals[x.id] * cm.rate, snackCost = cs.totals[x.id] * cs.rate;
+    const cost = mealCost + snackCost, paid = cm.paid[x.id] + cs.paid[x.id];
+    return {id: x.id, name: x.name, meals: cm.totals[x.id], mealCost, snacks: cs.totals[x.id], snackCost, cost, paid, bal: paid - cost};
+  });
+  const days = [];
+  for (let d = 1; d <= nd; d++) {
+    days.push({d, wd: WK[new Date(y, mo, d).getDay()],
+      meal: data.members.map(x => getCount('meal', x.id, d)), snack: data.members.map(x => getCount('snack', x.id, d))});
+  }
+  const exps = (M().expenses || []).filter(e => memberById(e.by)).slice()
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+    .map(e => ({date: dateLabel(e.date), who: memberById(e.by).name, kind: e.kind === 'meal' ? 'বাজার' : 'স্ন্যাক', note: e.note || '', amount: +e.amount || 0}));
+  return {key: mkey(), label: MONTHS[mo] + ' ' + y, cm, cs, members, days, exps, names: data.members.map(x => x.name),
+    settle: settle(members.map(m => ({name: m.name, b: m.bal})))};
+}
+function reportSheets(r) {
+  const R2 = n => { const v = Math.round(n * 100) / 100; return Math.abs(v) < 0.005 ? 0 : v; };
+  const T = (v, s) => [s === 'money' || s === 'tmoney' ? R2(v) : v, s || 'text'];
+  const H = a => a.map(x => T(x, 'head'));
+  const sm = k => r.members.reduce((a, m) => a + m[k], 0);
+
+  const S = [];
+  S.push([T('মিলের হিসাব — ' + r.label, 'title')]);
+  S.push([]);
+  S.push([T('মোট বাজার', 'bold'), T(r.cm.totalExp, 'money'), T('মোট মিল', 'bold'), T(r.cm.totalMeals, 'num'), T('প্রতি মিল', 'bold'), T(r.cm.rate, 'money')]);
+  S.push([T('মোট স্ন্যাক খরচ', 'bold'), T(r.cs.totalExp, 'money'), T('মোট স্ন্যাক', 'bold'), T(r.cs.totalMeals, 'num'), T('প্রতি স্ন্যাক', 'bold'), T(r.cs.rate, 'money')]);
+  S.push([]);
+  S.push(H(['নাম', 'মিল', 'মিলের খরচ', 'স্ন্যাক', 'স্ন্যাকের খরচ', 'মোট খরচ', 'দিয়েছেন', 'পাবেন (+) / দিতে হবে (−)']));
+  r.members.forEach(m => S.push([T(m.name), T(m.meals, 'num'), T(m.mealCost, 'money'), T(m.snacks, 'num'), T(m.snackCost, 'money'), T(m.cost, 'money'), T(m.paid, 'money'), T(m.bal, 'money')]));
+  S.push([T('মোট', 'ttext'), T(sm('meals'), 'tnum'), T(sm('mealCost'), 'tmoney'), T(sm('snacks'), 'tnum'), T(sm('snackCost'), 'tmoney'), T(sm('cost'), 'tmoney'), T(sm('paid'), 'tmoney'), T(sm('bal'), 'tmoney')]);
+  if (r.settle.length) {
+    S.push([]);
+    S.push([T('হিসাব মেটানোর উপায়', 'bold')]);
+    S.push(H(['দেবেন', 'পাবেন', 'টাকা']));
+    r.settle.forEach(([a, b, amt]) => S.push([T(a), T(b), T(amt, 'money')]));
+  }
+  const sheets = [{name: 'সারাংশ', widths: [20, 12, 16, 12, 16, 16, 16, 24], rows: S}];
+
+  [['meal', 'মিল', r.cm, 'meals', 'mealCost'], ['snack', 'স্ন্যাক', r.cs, 'snacks', 'snackCost']].forEach(([k, u, c, tk, ck]) => {
+    const rows = [H(['তারিখ'].concat(r.names))];
+    r.days.forEach(x => rows.push([T(x.d + ' ' + x.wd)].concat(x[k].map(v => T(v, 'num')))));
+    rows.push([T('মোট ' + u, 'ttext')].concat(r.members.map(m => T(m[tk], 'tnum'))));
+    rows.push([T('মোট খরচ', 'ttext')].concat(r.members.map(m => T(m[ck], 'tmoney'))));
+    rows.push([T('প্রতি ' + u, 'ttext'), T(c.rate, 'tmoney')]);
+    sheets.push({name: u, widths: [14].concat(r.names.map(() => 14)), rows});
+  });
+
+  const E = [H(['তারিখ', 'কে দিয়েছেন', 'ধরন', 'বিবরণ', 'টাকা'])];
+  r.exps.forEach(e => E.push([T(e.date), T(e.who), T(e.kind), T(e.note), T(e.amount, 'money')]));
+  E.push([T('মোট', 'ttext'), T('', 'ttext'), T('', 'ttext'), T('', 'ttext'), T(r.cm.totalExp + r.cs.totalExp, 'tmoney')]);
+  sheets.push({name: 'খরচ', widths: [14, 16, 12, 30, 14], rows: E});
+  return sheets;
+}
+// </report>
+
+// ---------- রিপোর্ট: PDF (প্রিন্ট) ও Excel ----------
+function tbl(head, rows, tot, numFrom) {
+  const t = h('table');
+  const hr = h('tr'); head.forEach((x, i) => hr.appendChild(h('th', i >= numFrom ? 'n' : '', x)));
+  t.appendChild(h('thead', null, null, hr));
+  const tb = h('tbody');
+  const addRow = (r, cls) => {
+    const tr = h('tr', cls || '');
+    r.forEach((c, i) => { const o = (c && typeof c === 'object') ? c : {t: String(c)}; tr.appendChild(h('td', (i >= numFrom ? 'n ' : '') + (o.c || ''), o.t)); });
+    tb.appendChild(tr);
+  };
+  rows.forEach(r => addRow(r)); if (tot) addRow(tot, 'tot');
+  t.appendChild(tb); return t;
+}
+function reportHTML(r) {
+  const root = h('div', 'rp');
+  const now = new Date();
+  root.append(h('h1', null, 'মিলের হিসাব — ' + r.label),
+    h('div', 'sub', 'তৈরির তারিখ: ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear()));
+  const box = (l, v) => h('div', null, l, h('b', null, v));
+  root.appendChild(h('div', 'rstats', null,
+    box('মোট বাজার', money(r.cm.totalExp)), box('মোট মিল', fmt(r.cm.totalMeals)), box('প্রতি মিল', money(r.cm.rate)),
+    box('মোট স্ন্যাক খরচ', money(r.cs.totalExp)), box('মোট স্ন্যাক', fmt(r.cs.totalMeals)), box('প্রতি স্ন্যাক', money(r.cs.rate))));
+
+  const sm = k => r.members.reduce((a, m) => a + m[k], 0);
+  const balCell = b => Math.abs(b) < 0.005 ? {t: 'মিলে গেছে'} : b > 0 ? {t: 'পাবেন ' + money(b), c: 'pos'} : {t: 'দিতে হবে ' + money(-b), c: 'neg'};
+  root.appendChild(h('h2', null, 'কার কত হিসাব'));
+  root.appendChild(tbl(['নাম', 'মিল', 'মিলের খরচ', 'স্ন্যাক', 'স্ন্যাকের খরচ', 'মোট খরচ', 'দিয়েছেন', 'হিসাব'],
+    r.members.map(m => [m.name, fmt(m.meals), money(m.mealCost), fmt(m.snacks), money(m.snackCost), money(m.cost), money(m.paid), balCell(m.bal)]),
+    ['মোট', fmt(sm('meals')), money(sm('mealCost')), fmt(sm('snacks')), money(sm('snackCost')), money(sm('cost')), money(sm('paid')), ''], 1));
+
+  if (r.settle.length) {
+    root.appendChild(h('h2', null, 'হিসাব মেটানোর উপায়'));
+    root.appendChild(tbl(['দেবেন', 'পাবেন', 'টাকা'], r.settle.map(([a, b, amt]) => [a, b, money(amt)]), null, 2));
+  }
+
+  root.appendChild(h('h2', 'brk', 'দিনের মিল'));
+  root.appendChild(tbl(['তারিখ'].concat(r.names),
+    r.days.map(x => [x.d + ' ' + x.wd].concat(x.meal.map(v => v ? fmt(v) : '0'))),
+    ['মোট'].concat(r.members.map(m => fmt(m.meals))), 1));
+
+  const sdays = r.days.filter(x => x.snack.some(v => v > 0));
+  if (sdays.length) {
+    root.appendChild(h('h2', null, 'দিনের স্ন্যাক (যেদিন হয়েছে)'));
+    root.appendChild(tbl(['তারিখ'].concat(r.names),
+      sdays.map(x => [x.d + ' ' + x.wd].concat(x.snack.map(v => v ? fmt(v) : '0'))),
+      ['মোট'].concat(r.members.map(m => fmt(m.snacks))), 1));
+  }
+
+  if (r.exps.length) {
+    root.appendChild(h('h2', null, 'বাজার ও স্ন্যাকের খরচ'));
+    root.appendChild(tbl(['তারিখ', 'কে দিয়েছেন', 'ধরন', 'বিবরণ', 'টাকা'],
+      r.exps.map(e => [e.date, e.who, e.kind, e.note, money(e.amount)]),
+      ['মোট', '', '', '', money(r.cm.totalExp + r.cs.totalExp)], 4));
+  }
+  root.appendChild(h('div', 'foot', 'মিলের হিসাব অ্যাপ থেকে তৈরি'));
+  return root;
+}
+function printReport() {
+  const area = $('printArea'); area.innerHTML = '';
+  area.appendChild(reportHTML(buildReport()));
+  toast('প্রিন্ট ডায়ালগে "PDF হিসেবে সেভ করুন" বেছে নিন');
+  setTimeout(() => window.print(), 500);
+}
+window.addEventListener('afterprint', () => { $('printArea').innerHTML = ''; });
+async function exportXlsx() {
+  const r = buildReport();
+  try {
+    const res = await fetch('/api/xlsx', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({sheets: reportSheets(r)})});
+    if (!res.ok) throw 0;
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'meal-hisab-' + r.key + '.xlsx';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast('Excel ফাইল ডাউনলোড হচ্ছে');
+  } catch (e) { toast('Excel তৈরি করা যায়নি — সার্ভার চালু আছে কি?'); }
+}
+
+// ---------- সারাংশ ----------
+function renderSummary(box) {
+  const cm = calc('meal'), cs = calc('snack');
+  const total = cm.totalExp + cs.totalExp;
+
+  const hero = h('section', 'card hero');
+  hero.append(
+    h('div', 'lbl', 'এই মাসে মোট খরচ (বাজার + স্ন্যাক)'),
+    h('div', 'big', money(total)),
+    h('div', 'stats', null, stat('মিলের রেট', money(cm.rate), 'gold'), stat('স্ন্যাকের রেট', money(cs.rate), 'gold'), stat('মোট মিল', fmt(cm.totalMeals)))
+  );
+  box.appendChild(hero);
+
+  const card = h('section', 'card');
+  card.appendChild(h('h2', null, 'কার কত হিসাব', h('small', null, 'দিয়েছেন − খরচ')));
+  const bal = [];
+  data.members.forEach(x => {
+    const mealCost = cm.totals[x.id] * cm.rate, snackCost = cs.totals[x.id] * cs.rate;
+    const cost = mealCost + snackCost, paid = cm.paid[x.id] + cs.paid[x.id], b = paid - cost;
+    bal.push({name: x.name, b});
+    const chip = Math.abs(b) < 0.005 ? h('span', 'chip2 zero', 'মিলে গেছে')
+      : b > 0 ? h('span', 'chip2 pos', 'পাবেন ' + money(b)) : h('span', 'chip2 neg', 'দিতে হবে ' + money(-b));
+    const mem = h('div', 'mem');
+    mem.append(
+      h('div', 'memhead', null, h('b', null, x.name), chip),
+      h('div', 'line', null, h('span', null, 'মিল ' + fmt(cm.totals[x.id]) + ' × ' + money(cm.rate)), h('b', null, money(mealCost))),
+      h('div', 'line', null, h('span', null, 'স্ন্যাক ' + fmt(cs.totals[x.id]) + ' × ' + money(cs.rate)), h('b', null, money(snackCost))),
+      h('div', 'line tot', null, h('span', null, 'মোট খরচ'), h('b', null, money(cost))),
+      h('div', 'line', null, h('span', null, 'বাজার/স্ন্যাকে দিয়েছেন'), h('b', null, money(paid)))
+    );
+    card.appendChild(mem);
+  });
+  box.appendChild(card);
+
+  const st = settle(bal);
+  const sc = h('section', 'card');
+  sc.appendChild(h('h2', null, 'হিসাব মেটানোর উপায়'));
+  if (!st.length) sc.appendChild(h('div', 'empty-msg', total ? 'সবার হিসাব মিলে গেছে।' : 'এখনো কোনো হিসাব নেই।'));
+  st.forEach(([from, to, amt]) => {
+    sc.appendChild(h('div', 'settle', null, h('span', null, null, h('b', null, from), h('span', 'arrow', '→'), h('b', null, to)), h('b', 'amt', money(amt))));
+  });
+  box.appendChild(sc);
+
+  const ac = h('section', 'card');
+  ac.appendChild(h('h2', null, 'মাস শেষে সবাইকে দেখান'));
+  ac.appendChild(h('div', 'empty-msg', 'পুরো মাসের হিসাব PDF বা Excel হিসেবে নিয়ে গ্রুপে শেয়ার করুন।'));
+  const arow = h('div', 'row');
+  const bp = h('button', 'btn', 'PDF করুন'); bp.onclick = printReport;
+  const bx = h('button', 'btn ghost', 'Excel নামান'); bx.onclick = exportXlsx;
+  arow.append(bp, bx); ac.appendChild(arow);
+  box.appendChild(ac);
+
+  const rep = h('section', 'card');
+  rep.appendChild(h('h2', null, 'মাস শেষে সবাইকে দেখান', h('small', null, MONTHS[view.getMonth()])));
+  const rrow = h('div', 'row'); rrow.style.marginTop = '0';
+  const pdf = h('button', 'btn', 'হোয়াটসঅ্যাপে শেয়ার'); pdf.onclick = () => window.shareReport(data, mkey());
+  const xl = h('button', 'btn ghost', 'Excel ফাইল'); xl.onclick = () => window.exportXlsx(data, mkey());
+  rrow.append(pdf, xl); rep.appendChild(rrow);
+  rep.appendChild(h('div', 'empty-msg', 'বাঁদিকের বোতামে লেখা আকারে হিসাব, ডানেরটায় Excel ফাইল শেয়ার হবে।'));
+  box.appendChild(rep);
+
+  const clr = h('button', 'btn danger', 'এই মাসের সব হিসাব মুছুন');
+  clr.style.marginTop = '18px';
+  clr.onclick = () => {
+    if (!confirm(MONTHS[view.getMonth()] + ' মাসের সব মিল ও খরচের হিসাব মুছে যাবে। নিশ্চিত?')) return;
+    delete data.months[mkey()]; save(); render();
+  };
+  box.appendChild(clr);
+}
+
+// ---------- মিল / স্ন্যাক ----------
+function renderKind(box, kind) {
+  const c = calc(kind), u = unitOf(kind), isMeal = kind === 'meal';
+
+  box.appendChild(h('section', 'card stats3', null,
+    stat(isMeal ? 'মোট বাজার' : 'মোট স্ন্যাক খরচ', money(c.totalExp)),
+    stat('মোট ' + u, fmt(c.totalMeals)),
+    stat('প্রতি ' + u, money(c.rate), 'gold')));
+
+  // সদস্য-ভিত্তিক টেবিল
+  const mc = h('section', 'card');
+  mc.appendChild(h('h2', null, 'সদস্য অনুযায়ী'));
+  const t = h('div', 'mtable');
+  ['সদস্য', u, 'খরচ', 'দিয়েছেন'].forEach((x, i) => t.appendChild(h('span', 'h' + (i ? ' r' : ''), x)));
+  data.members.forEach(x => {
+    t.append(h('span', null, x.name), h('span', 'r', fmt(c.totals[x.id])), h('span', 'r', money(c.totals[x.id] * c.rate)), h('span', 'r', money(c.paid[x.id])));
+  });
+  t.append(h('span', 't', 'মোট'), h('span', 't r', fmt(c.totalMeals)), h('span', 't r', money(c.totalExp)), h('span', 't r', money(c.totalExp)));
+  mc.appendChild(t);
+  box.appendChild(mc);
+
+  // দিনের হিসাব
+  const y = view.getFullYear(), mo = view.getMonth();
+  const days = new Date(y, mo + 1, 0).getDate();
+  const n = data.members.length;
+  const cols = '70px repeat(' + n + ',1fr)';
+  const dc = h('section', 'card');
+  dc.appendChild(h('h2', null, 'দিনের ' + u, h('small', null, 'দিনে ট্যাপ করে বদলান')));
+  const grid = h('div', 'dgrid');
+  const head = h('div', 'drow head'); head.style.gridTemplateColumns = cols;
+  head.appendChild(h('span', null, 'তারিখ'));
+  data.members.forEach(x => head.appendChild(h('span', 'dc', x.name)));
+  grid.appendChild(head);
+  const now = new Date();
+  for (let d = 1; d <= days; d++) {
+    const isToday = now.getFullYear() === y && now.getMonth() === mo && now.getDate() === d;
+    const row = h('button', 'drow' + (isToday ? ' today' : '')); row.style.gridTemplateColumns = cols;
+    row.appendChild(h('span', 'dl', null, h('b', null, String(d)), h('small', null, WK[new Date(y, mo, d).getDay()])));
+    data.members.forEach(x => { const v = getCount(kind, x.id, d); row.appendChild(h('span', 'dc' + (v ? '' : ' z'), v ? fmt(v) : '0')); });
+    row.onclick = () => openDay(kind, d);
+    grid.appendChild(row);
+  }
+  const tot = h('div', 'drow total'); tot.style.gridTemplateColumns = cols;
+  tot.appendChild(h('span', null, 'মোট'));
+  data.members.forEach(x => tot.appendChild(h('span', 'dc', fmt(c.totals[x.id]))));
+  grid.appendChild(tot);
+  dc.appendChild(grid);
+  box.appendChild(dc);
+
+  // খরচের তালিকা
+  const ec = h('section', 'card');
+  ec.appendChild(h('h2', null, isMeal ? 'বাজারের খরচ' : 'স্ন্যাকের খরচ', h('small', null, c.exp.length ? 'মোট ' + money(c.totalExp) : '')));
+  if (!c.exp.length) ec.appendChild(h('div', 'empty-msg', 'এই মাসে এখনো কোনো খরচ লেখা হয়নি।'));
+  const list = h('div');
+  c.exp.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(e => {
+    const who = memberById(e.by);
+    const av = h('div', 'av', Array.from(who.name)[0]); av.style.background = colorOf(e.by);
+    let sub = who.name;
+    if (e.date) { const d = new Date(e.date + 'T00:00:00'); sub += ' · ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+    const b = h('button', 'entry', null, av, h('div', 'mid', null, h('div', null, e.note || (isMeal ? 'বাজার' : 'স্ন্যাক')), h('small', null, sub)), h('div', 'amt', money(e.amount)));
+    b.onclick = () => openExp(kind, e);
+    list.appendChild(b);
+  });
+  ec.appendChild(list);
+  const add = h('button', 'btn', '+ খরচ যোগ করুন'); add.style.marginTop = '12px';
+  add.onclick = () => openExp(kind, null);
+  ec.appendChild(add);
+  box.appendChild(ec);
+}
+
+// ---------- দিনের মিল সম্পাদনা ----------
+let dctx = {kind: 'meal', d: 1};
+function setCount(kind, mid, d, v) {
+  const m = W();
+  m.counts[kind][mid] = m.counts[kind][mid] || {};
+  if (v > 0) m.counts[kind][mid][d] = v; else delete m.counts[kind][mid][d];
+  save();
+}
+function openDay(kind, d) { dctx = {kind, d}; renderDay(); if (!$('dayDlg').open) $('dayDlg').showModal(); }
+function renderDay() {
+  const {kind, d} = dctx;
+  const y = view.getFullYear(), mo = view.getMonth();
+  const days = new Date(y, mo + 1, 0).getDate();
+  $('dTitle').textContent = d + ' ' + MONTHS[mo] + ', ' + WKL[new Date(y, mo, d).getDay()];
+  $('dPrev').style.visibility = d > 1 ? 'visible' : 'hidden';
+  $('dNext').style.visibility = d < days ? 'visible' : 'hidden';
+  const q = $('dQuick'); q.innerHTML = '';
+  [['সবাই 0', 0], ['সবাই 1', 1], ['সবাই 2', 2]].forEach(([l, v]) => {
+    const b = h('button', null, l); b.onclick = () => { data.members.forEach(x => setCount(kind, x.id, d, v)); renderDay(); }; q.appendChild(b);
+  });
+  const body = $('dBody'); body.innerHTML = '';
+  data.members.forEach(x => {
+    const val = h('span', 'val', fmt(getCount(kind, x.id, d)));
+    const minus = h('button', null, '−'), plus = h('button', null, '+');
+    const change = delta => { const v = Math.max(0, Math.min(20, getCount(kind, x.id, d) + delta)); setCount(kind, x.id, d, v); val.textContent = fmt(v); };
+    minus.onclick = () => change(-0.5); plus.onclick = () => change(0.5);
+    body.appendChild(h('div', 'step', null, h('span', 'nm', x.name), h('div', 'ctl', null, minus, val, plus)));
+  });
+}
+$('dPrev').onclick = () => { if (dctx.d > 1) { dctx.d--; renderDay(); } };
+$('dNext').onclick = () => { const days = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate(); if (dctx.d < days) { dctx.d++; renderDay(); } };
+$('dDone').onclick = () => $('dayDlg').close();
+$('dayDlg').addEventListener('close', render);
+
+// ---------- খরচ সম্পাদনা ----------
+let ectx = null;
+function defaultDate() { const t = todayStr(); return t.startsWith(mkey()) ? t : mkey() + '-01'; }
+function openExp(kind, exp) {
+  ectx = {kind, id: exp ? exp.id : null, by: exp ? exp.by : data.members[0].id};
+  $('eTitle').textContent = (exp ? 'খরচ বদলান' : 'নতুন খরচ') + ' — ' + unitOf(kind);
+  $('eAmt').value = exp ? exp.amount : '';
+  $('eNote').value = exp ? (exp.note || '') : '';
+  $('eDate').value = exp ? (exp.date || '') : defaultDate();
+  $('eDel').style.display = exp ? '' : 'none';
+  renderWho();
+  $('expDlg').showModal();
+  if (!exp) setTimeout(() => $('eAmt').focus(), 50);
+}
+function renderWho() {
+  const box = $('eWho'); box.innerHTML = '';
+  data.members.forEach(x => {
+    const b = h('button', 'chip' + (x.id === ectx.by ? ' on' : ''), x.name);
+    b.onclick = () => { ectx.by = x.id; renderWho(); };
+    box.appendChild(b);
+  });
+}
+$('eCancel').onclick = () => $('expDlg').close();
+$('eOk').onclick = () => {
+  const amount = +$('eAmt').value;
+  if (!(amount > 0)) { toast('টাকার পরিমাণ লিখুন'); $('eAmt').focus(); return; }
+  const rec = {kind: ectx.kind, by: ectx.by, amount, note: $('eNote').value.trim(), date: $('eDate').value || ''};
+  const m = W();
+  if (ectx.id) Object.assign(m.expenses.find(e => e.id === ectx.id), rec); else m.expenses.push(Object.assign({id: uid()}, rec));
+  $('expDlg').close(); save(); render(); toast(ectx.id ? 'আপডেট হয়েছে' : 'খরচ যোগ হয়েছে');
+};
+$('eDel').onclick = () => {
+  if (!confirm('এই খরচটি মুছে ফেলবেন?')) return;
+  const m = W(); m.expenses = m.expenses.filter(e => e.id !== ectx.id);
+  $('expDlg').close(); save(); render();
+};
+
+// ---------- সদস্য ----------
+function renderMem() {
+  const box = $('memList'); box.innerHTML = '';
+  data.members.forEach(m => {
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = m.name; inp.autocomplete = 'off';
+    inp.oninput = () => { m.name = inp.value; save(); };
+    inp.onblur = () => { if (!inp.value.trim()) { m.name = 'সদস্য'; inp.value = m.name; save(); } };
+    const del = h('button', null, '✕'); del.setAttribute('aria-label', 'মুছুন');
+    del.onclick = () => {
+      if (data.members.length <= 1) { toast('কমপক্ষে একজন সদস্য থাকতে হবে'); return; }
+      if (!confirm('"' + m.name + '" কে মুছলে তার সব মিল ও খরচের তথ্য মুছে যাবে। নিশ্চিত?')) return;
+      data.members = data.members.filter(x => x.id !== m.id);
+      Object.values(data.months).forEach(mo => {
+        ['meal', 'snack'].forEach(k => { if (mo.counts && mo.counts[k]) delete mo.counts[k][m.id]; });
+        mo.expenses = (mo.expenses || []).filter(e => e.by !== m.id);
+      });
+      save(); renderMem();
+    };
+    box.appendChild(h('div', 'mrow2', null, inp, del));
+  });
+}
+$('memBtn').onclick = () => { renderMem(); $('memDlg').showModal(); };
+$('addMem').onclick = () => {
+  const n = $('newMem').value.trim(); if (!n) return;
+  data.members.push({id: uid(), name: n}); $('newMem').value = ''; save(); renderMem();
+};
+$('newMem').onkeydown = e => { if (e.key === 'Enter') $('addMem').click(); };
+$('memDone').onclick = () => $('memDlg').close();
+$('memDlg').addEventListener('close', render);
+
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
+$('prev').onclick = () => { view.setMonth(view.getMonth() - 1); render(); };
+$('next').onclick = () => { view.setMonth(view.getMonth() + 1); render(); };
+
+load();
+</script>
+
+<style>
+.homebtn{position:fixed;left:max(16px,calc(50% - 320px));bottom:max(22px,env(safe-area-inset-bottom));z-index:60;
+display:flex;align-items:center;gap:6px;height:46px;padding:0 16px;border-radius:16px;text-decoration:none;
+background:rgba(29,51,73,.92);color:#eaf0f6;border:1px solid rgba(255,255,255,.12);font:600 15px 'Hind Siliguri','Noto Sans Bengali',system-ui,sans-serif;
+backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.homebtn:active{transform:scale(.95)}
+</style>
+<a class="homebtn" href="index.html" aria-label="হোমে ফিরুন">← হোম</a>
+</body>
+</html>

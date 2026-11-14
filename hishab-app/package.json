@@ -1,0 +1,15 @@
+{
+  "name": "hishab-khata",
+  "version": "1.0.0",
+  "private": true,
+  "description": "আমার খাতা — হাজিরা, ক্যাশবুক ও মিলের হিসাব",
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.1",
+    "@capacitor/share": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
