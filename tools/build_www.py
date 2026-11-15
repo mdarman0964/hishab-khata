@@ -15,7 +15,7 @@ def write(name, text):
 
 
 def page(html, key, extra=""):
-    tag = "<script>window.APP_KEY=%r</script><script src=\"store.js\"></script>%s" % (key, extra)
+    tag = "<script>window.APP_KEY=%r</script><script src=\"firebase-config.js\"></script><script src=\"store.js\"></script><script src=\"sync.js\"></script>%s" % (key, extra)
     html = html.replace("<head>", "<head>" + tag, 1)
     html = html.replace("</body>", run.HOME_BTN + "</body>", 1)
     return html.replace('href="/"', 'href="index.html"')
@@ -39,8 +39,9 @@ write("meal.html", page(m, "meal", '<script src="meal-export.js"></script>'))
 home = run.HOME
 for k in ("hajira", "cashbook", "meal"):
     home = home.replace('href="/%s"' % k, 'href="%s.html"' % k)
-home = home.replace("<script>", '<script src="store.js"></script>\n<script>', 1)
+home = home.replace("<script>", '<script src="firebase-config.js"></script><script src="store.js"></script><script src="sync.js"></script>\n<script>', 1)
 home = home.replace("\n</div>\n\n<script", """
+  <section class="acct" id="acct"></section>
   <button class="bk" id="bkBtn">ব্যাকআপ ও ফিরিয়ে আনা</button>
 </div>
 
@@ -54,6 +55,11 @@ home = home.replace("\n</div>\n\n<script", """
 
 <script""", 1)
 home = home.replace("</head>", """<style>
+.acct{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;margin:4px 0 12px}
+.acct .at{font-weight:600;margin-bottom:4px} .acct .am{color:var(--muted);font-size:14px;margin-bottom:8px;word-break:break-word}
+.acct input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;font:inherit}
+.acct .arow{display:flex;gap:8px} .acct button{flex:1;padding:11px 8px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1405;font:600 14px inherit;font-family:inherit;cursor:pointer}
+.acct button.g{background:rgba(255,255,255,.08);color:var(--text)} .acct button.alink{background:none;color:var(--muted);flex:none;width:auto;padding:8px 0 0;font-weight:400;text-decoration:underline}
 .bk{display:block;margin:6px auto 0;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--muted);font:500 14px inherit;font-family:inherit;cursor:pointer}
 dialog{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:22px;padding:18px;width:min(94vw,520px)}
 dialog::backdrop{background:rgba(5,10,16,.7)}
@@ -84,10 +90,36 @@ $('bkRestore').onclick = () => {
     const o = JSON.parse($('bkText').value), ks = KEYS.filter(k => o[k]);
     if (!ks.length) throw 0;
     if (!confirm('বর্তমান হিসাব মুছে এই ব্যাকআপ থেকে ফিরিয়ে আনবেন?')) return;
-    ks.forEach(k => localStorage.setItem('hishab:' + k, JSON.stringify(o[k])));
+    ks.forEach(k => { localStorage.setItem('hishab:' + k, JSON.stringify(o[k])); if (window.HishabSync) HishabSync.touch(k); });
     alert('ফিরিয়ে আনা হয়েছে'); location.reload();
   } catch (e) { alert('ব্যাকআপের লেখাটা ঠিক নেই'); }
 };
+const S = window.HishabSync;
+function renderAcct() {
+  const i = S.info(), box = $('acct');
+  if (!i.configured) { box.innerHTML = '<div class="at">☁ ক্লাউড ব্যাকআপ</div><div class="am">এখনো চালু করা হয়নি — www/firebase-config.js-এ Firebase-এর দুটো মান বসাতে হবে।</div>'; return; }
+  if (i.email) {
+    box.innerHTML = '<div class="at">☁ অটো ব্যাকআপ চালু</div><div class="am" id="aE"></div><div class="am" id="aS"></div><div class="arow"><button id="aSync">এখনই সিঙ্ক</button><button class="g" id="aOut">লগআউট</button></div>';
+    $('aE').textContent = i.email;
+    $('aS').textContent = i.pending ? 'সিঙ্ক বাকি আছে (ইন্টারনেট এলে নিজে হবে)' : (i.last ? 'শেষ সিঙ্ক: ' + new Date(i.last).toLocaleString('en-GB') : 'এখনো সিঙ্ক হয়নি');
+    $('aSync').onclick = async () => { $('aS').textContent = 'অপেক্ষা করুন…'; try { if (await S.sync()) location.reload(); else renderAcct(); } catch (e) { $('aS').textContent = S.errText(e); } };
+    $('aOut').onclick = () => { if (confirm('লগআউট করবেন? ফোনের হিসাব ফোনেই থাকবে, শুধু অটো ব্যাকআপ বন্ধ হবে।')) { S.signOut(); renderAcct(); } };
+    return;
+  }
+  box.innerHTML = '<div class="at">☁ লগইন করে অটো ব্যাকআপ</div><div class="am">লগইন করলে হিসাব আপনার অ্যাকাউন্টে নিজে নিজে জমা হবে, ফোন বদলালেও ফিরে পাবেন।</div><input id="aMail" type="email" placeholder="ইমেইল" autocomplete="email"><input id="aPass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" autocomplete="current-password"><div class="arow"><button id="aIn">লগইন</button><button class="g" id="aUp">নতুন অ্যাকাউন্ট</button></div><button class="alink" id="aForgot">পাসওয়ার্ড ভুলে গেছেন?</button><div class="am" id="aMsg"></div>';
+  const run = async fn => {
+    $('aMsg').textContent = 'অপেক্ষা করুন…';
+    try { if (await fn($('aMail').value.trim(), $('aPass').value)) location.reload(); else renderAcct(); } catch (e) { $('aMsg').textContent = S.errText(e); }
+  };
+  $('aIn').onclick = () => run(S.signIn); $('aUp').onclick = () => run(S.signUp);
+  $('aForgot').onclick = async () => {
+    const m = $('aMail').value.trim(); if (!m) { $('aMsg').textContent = 'আগে ইমেইল লিখুন'; return; }
+    try { await S.reset(m); $('aMsg').textContent = 'পাসওয়ার্ড রিসেটের লিংক ইমেইলে পাঠানো হয়েছে'; } catch (e) { $('aMsg').textContent = S.errText(e); }
+  };
+}
+renderAcct();
+window.addEventListener('hishab-sync', () => { if (S.info().email) renderAcct(); });
+if (S.info().email) S.sync().then(ch => { if (ch) location.reload(); }).catch(() => {});
 </script></body>""", 1)
 write("index.html", home)
 print("www তৈরি হয়েছে:", sorted(os.listdir(WWW)))

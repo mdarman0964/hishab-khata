@@ -19,7 +19,7 @@
     if (!k || !DEF[k]) return real(u, o);
     var sk = 'hishab:' + k;
     if (o && o.method === 'POST') {
-      try { JSON.parse(o.body); localStorage.setItem(sk, o.body); return new Response('{"ok":true}', {status: 200}); }
+      try { JSON.parse(o.body); localStorage.setItem(sk, o.body); if (window.HishabSync) window.HishabSync.touch(k); return new Response('{"ok":true}', {status: 200}); }
       catch (e) { return new Response('{"ok":false}', {status: 400}); }
     }
     return new Response(localStorage.getItem(sk) || JSON.stringify(DEF[k]), {status: 200, headers: {'Content-Type': 'application/json'}});
