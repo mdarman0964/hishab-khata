@@ -26,6 +26,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Inject Firebase config from GitHub Secret
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then
+            echo "::error::GitHub Actions secret API_KEY is missing."
+            exit 1
+          fi
+          cat > www/firebase-config.js <<EOF
+          // Generated during the Android build from GitHub Actions secret API_KEY.
+          window.FIREBASE_CONFIG = { apiKey: "$API_KEY", projectId: "amar-khata-b5d2d" };
+          EOF
+
       - name: Create Android project
         run: |
           npx cap add android
